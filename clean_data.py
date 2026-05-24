@@ -12,7 +12,7 @@ def clean_data(df):
     df = df[~df['comment_text'].str.strip().str.lower().isin(junk_comments)].reset_index(drop=True)
 
     # Remove non-alphanumeric characters
-    df['comment_text'] = df['comment_text'].str.replace(r'[^0-9a-zA-Z\s.,!?]', '', regex=True)
+    df['comment_text'] = df['comment_text'].str.replace(r'[^0-9a-zA-Z\s.,!?/]', '', regex=True)
 
     # Normalize whitespace
     df['comment_text'] = df['comment_text'].str.replace(r'\s+', ' ', regex=True).str.strip()
