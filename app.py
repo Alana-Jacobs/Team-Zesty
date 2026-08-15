@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from textblob import TextBlob
 from clean_data import clean_data
 from sentiment import analyse_sentiment
+from themes import extract_themes
+
 
 st.title("Customer Sentiment and Theme Dashboard")
 
@@ -20,8 +22,15 @@ if uploaded_file is not None:
     before_cleaning = len(df)
     df = clean_data(df)
     df = analyse_sentiment(df)
+    themes = extract_themes(df)
     st.success("Dataset uploaded successfully!")
+    st.subheader("Common Themes")
+    st.subheader("Theme Extraction")
 
+    st.dataframe(
+    df[["comment_text", "theme"]],
+    hide_index=True
+)
     # Data cleaning summary
     with st.expander("Data Cleaning Summary"):
         st.write(f"Number of entries before cleaning: {before_cleaning}")
