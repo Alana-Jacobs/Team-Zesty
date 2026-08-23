@@ -9,11 +9,6 @@ from themes import extract_themes
 
 st.title("Customer Sentiment and Theme Dashboard")
 
-# Sidebar + theme filter
-with st.sidebar:
-    st.header("Themes")
-    st.pills("Filter by theme", ["All"])
-    
 # Load CSV file
 uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
 
@@ -22,15 +17,25 @@ if uploaded_file is not None:
     before_cleaning = len(df)
     df = clean_data(df)
     df = analyse_sentiment(df)
-    themes = extract_themes(df)
-    st.success("Dataset uploaded successfully!")
-    st.subheader("Common Themes")
-    st.subheader("Theme Extraction")
+    df = extract_themes(df)
 
-    st.dataframe(
-    df[["comment_text", "theme"]],
-    hide_index=True
-)
+    # Sidebar + theme filter
+    with st.sidebar:
+        st.header("Themes")
+        theme_options = ["All"] + sorted(df["theme"].unique().tolist())
+        selected_theme = st.pills("Filter by theme", theme_options)
+
+    if selected_theme and selected_theme != "All":
+        df = df[df["theme"] == selected_theme]
+
+    st.success("Dataset uploaded successfully!")
+
+    with st.expander("Theme Extraction Summary"):
+        st.dataframe(
+            df[["comment_text", "theme"]],
+            hide_index=True
+        )
+
     # Data cleaning summary
     with st.expander("Data Cleaning Summary"):
         st.write(f"Number of entries before cleaning: {before_cleaning}")
@@ -58,16 +63,20 @@ if uploaded_file is not None:
     data_trends = data_trends.sort_values('created_at')
     data_trends = data_trends.set_index('created_at')
     data_trends = data_trends.resample('ME').mean()
-    fig, ax = plt.subplots()
-    data_trends['sentiment_score'].plot(ax=ax)
-    ax.set_title("Sentiment Trends Over Time")
-    ax.set_xlabel("Time")
-    ax.set_ylabel("Average Sentiment Score")
-    ax.axhline(y=0, color='grey', linestyle='--', label='Neutral sentiment', alpha=0.4)
-    ax.legend()
-    st.pyplot(fig)
-    plt.close(fig)
-        
+
+    if not data_trends.empty:
+        fig, ax = plt.subplots()
+        data_trends['sentiment_score'].plot(ax=ax)
+        ax.set_title("Sentiment Trends Over Time")
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Average Sentiment Score")
+        ax.axhline(y=0, color='grey', linestyle='--', label='Neutral sentiment', alpha=0.4)
+        ax.legend()
+        st.pyplot(fig)
+        plt.close(fig)
+    else:
+        st.info("Not enough date data to display trend chart for this theme filter.")
+
     # Display random sample of comments
-    st.write("Random Sample of Comments:")
-    st.dataframe(df[['comment_text']].sample(min(5, len(df))), hide_index=True)
+    with st.expander("Random Sample of Comments"):
+        st.dataframe(df[['comment_text']].sample(min(5, len(df))), hide_index=True)
