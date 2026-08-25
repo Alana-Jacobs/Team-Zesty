@@ -15,8 +15,19 @@ uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     before_cleaning = len(df)
-    df = clean_data(df)
-    df = analyse_sentiment(df)
+
+    try:
+        df = clean_data(df)
+    except ValueError as e:
+        st.error(f"Error occurred while cleaning data: {e}")
+        st.stop()
+
+    try:
+        df = analyse_sentiment(df)
+    except ValueError as e:
+        st.error(f"Error occurred while analysing sentiment: {e}")
+        st.stop()
+
     df = extract_themes(df)
 
     # Sidebar + theme filter
