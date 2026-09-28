@@ -30,28 +30,38 @@ if uploaded_file is not None:
 
     df = extract_themes(df)
 
-    # Sidebar + theme filter
+    # Sidebar + theme filter + Comments display + Downloads
     with st.sidebar:
         st.header("Themes")
         theme_options = ["All"] + sorted(df["theme"].unique().tolist())
         selected_theme = st.pills("Filter by theme", theme_options)
 
-    if selected_theme and selected_theme != "All":
-        df = df[df["theme"] == selected_theme]
+        st.subheader("Theme Comments")
+        selected_theme_comments = st.selectbox("View comments by theme", sorted(df["theme"].unique().tolist()))
+        theme_comments = df[df["theme"] == selected_theme_comments][["comment_text"]].sample(min(5, len(df[df["theme"] == selected_theme_comments])))
+        st.dataframe(theme_comments, hide_index=True)
+
+        st.download_button(
+            label="Export Filtered Comments as CSV",
+            data=df[['comment_text', 'theme', 'sentiment_label']].to_csv(index=False).encode('utf-8'),
+            file_name="filtered_comments.csv",
+            mime="text/csv"
+        )
 
     st.success("Dataset uploaded successfully!")
 
-    with st.expander("Theme Extraction Summary"):
-        st.dataframe(
-            df[["comment_text", "theme"]],
-            hide_index=True
-        )
-
-    # Data cleaning summary
-    with st.expander("Data Cleaning Summary"):
-        st.write(f"Number of entries before cleaning: {before_cleaning}")
-        st.write(f"Number of entries after cleaning: {len(df)}")
-        st.write(f"Number of entries removed: {before_cleaning - len(df)}")
+    with st.expander("Dashboard Summary"):
+        st.markdown(f"**Dataset Summary**")
+        st.write(f"Entries analysed: {len(df)}")
+        st.write(f"Entries removed during cleaning: {before_cleaning - len(df)}")
+        st.divider()
+        st.markdown("**Sentiment Overview**")
+        st.write(f"Positive: {len(df[df['sentiment_label'] == 'positive'])} comments")
+        st.write(f"Neutral: {len(df[df['sentiment_label'] == 'neutral'])} comments")
+        st.write(f"Negative: {len(df[df['sentiment_label'] == 'negative'])} comments")
+        st.divider()
+        st.markdown("**Top Themes**")
+        st.dataframe(df['theme'].value_counts().reset_index().rename(columns={'theme': 'Theme', 'count': 'Count'}), hide_index=True)
 
     # Sentiment analysis results
     st.subheader("Sentiment Analysis Results")
@@ -97,7 +107,3 @@ if uploaded_file is not None:
         st.plotly_chart(fig)
     else:
         st.info("Not enough date data to display theme trends")    
-
-    # Display random sample of comments
-    with st.expander("Random Sample of Comments"):
-        st.dataframe(df[['comment_text']].sample(min(5, len(df))), hide_index=True)
