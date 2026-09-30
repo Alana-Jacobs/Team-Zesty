@@ -36,14 +36,20 @@ if uploaded_file is not None:
         theme_options = ["All"] + sorted(df["theme"].unique().tolist())
         selected_theme = st.pills("Filter by theme", theme_options)
 
+    if selected_theme and selected_theme != "All":
+        filtered_df = df[df["theme"] == selected_theme].copy()
+    else:
+        filtered_df = df.copy()    
+
+    with st.sidebar:
         st.subheader("Theme Comments")
-        selected_theme_comments = st.selectbox("View comments by theme", sorted(df["theme"].unique().tolist()))
-        theme_comments = df[df["theme"] == selected_theme_comments][["comment_text"]].sample(min(5, len(df[df["theme"] == selected_theme_comments])))
+        selected_theme_comments = st.selectbox("View comments by theme", sorted(filtered_df["theme"].unique().tolist()))
+        theme_comments = filtered_df[filtered_df["theme"] == selected_theme_comments][["comment_text"]].sample(min(5, len(filtered_df[filtered_df["theme"] == selected_theme_comments])))
         st.dataframe(theme_comments, hide_index=True)
 
         st.download_button(
             label="Export Filtered Comments as CSV",
-            data=df[['comment_text', 'theme', 'sentiment_label']].to_csv(index=False).encode('utf-8'),
+            data=filtered_df[['comment_text', 'theme', 'sentiment_label']].to_csv(index=False).encode('utf-8'),
             file_name="filtered_comments.csv",
             mime="text/csv"
         )
@@ -69,7 +75,7 @@ if uploaded_file is not None:
 
     # Sentiment distribution chart
     sentiment_order = ['positive', 'neutral', 'negative']
-    distribution = df['sentiment_label'].value_counts().reindex(sentiment_order).reset_index()
+    distribution = filtered_df['sentiment_label'].value_counts().reindex(sentiment_order).reset_index()
     distribution.columns = ['Sentiment', 'Count']
     fig = px.bar(distribution, x='Sentiment', y='Count', color='Sentiment',
                 color_discrete_map={'positive': 'green', 'neutral': 'grey', 'negative': 'red'},
@@ -77,7 +83,7 @@ if uploaded_file is not None:
     st.plotly_chart(fig)
 
     # Sentiment trends over time
-    data_trends = df[['created_at', 'sentiment_score']].dropna()
+    data_trends = filtered_df[['created_at', 'sentiment_score']].dropna()
     data_trends = data_trends.sort_values('created_at')
     data_trends = data_trends.set_index('created_at')
     data_trends = data_trends.resample('ME').mean().reset_index()
@@ -95,7 +101,7 @@ if uploaded_file is not None:
     # Themes over time
     st.subheader("Themes Over Time")
     st.caption("Theme frequencies are potential indicators of recurring topics within your dataset and should not be interpreted as a definitive account of all issues present in customer feedback.")
-    theme_trends = df[['created_at', 'theme']].dropna()
+    theme_trends = filtered_df[['created_at', 'theme']].dropna()
     theme_trends = theme_trends.sort_values('created_at')
     theme_trends['month'] = theme_trends['created_at'].dt.to_period('M').dt.to_timestamp()
     theme_trends = theme_trends.groupby(['month', 'theme']).size().reset_index(name='count')
