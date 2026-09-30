@@ -94,6 +94,7 @@ if uploaded_file is not None:
 
     # Themes over time
     st.subheader("Themes Over Time")
+    st.caption("Theme frequencies are potential indicators of recurring topics within your dataset and should not be interpreted as a definitive account of all issues present in customer feedback.")
     theme_trends = df[['created_at', 'theme']].dropna()
     theme_trends = theme_trends.sort_values('created_at')
     theme_trends['month'] = theme_trends['created_at'].dt.to_period('M').dt.to_timestamp()
