@@ -98,10 +98,17 @@ if uploaded_file is not None:
     else:
         st.info("Not enough date data to display trend chart for this theme filter.")
 
-    # Themes over time
-    st.subheader("Themes Over Time")
+    # Themes distribution chart
+    st.subheader("Themes Distribution")
     st.caption("Theme frequencies are potential indicators of recurring topics within your dataset and should not be interpreted as a definitive account of all issues present in customer feedback.")
-    theme_trends = filtered_df[['created_at', 'theme']].dropna()
+    theme_distribution = df['theme'].value_counts().reset_index()
+    theme_distribution.columns = ['Theme', 'Count']
+    fig = px.bar(theme_distribution, x='Count', y='Theme', color='Theme', orientation='h', title='Themes Distribution')
+    fig.update_layout(showlegend=False)
+    st.plotly_chart(fig)
+
+    # Themes over time
+    theme_trends = df[['created_at', 'theme']].dropna()
     theme_trends = theme_trends.sort_values('created_at')
     theme_trends['month'] = theme_trends['created_at'].dt.to_period('M').dt.to_timestamp()
     theme_trends = theme_trends.groupby(['month', 'theme']).size().reset_index(name='count')
@@ -111,6 +118,6 @@ if uploaded_file is not None:
                       title='Theme Trends Over Time',
                       labels={'month': 'Date', 'count': 'Comment Count', 'theme': 'Theme'})
         fig.update_xaxes(rangeslider_visible=True)
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("Not enough date data to display theme trends")    
+        st.info("Not enough date data to display theme trends") 
