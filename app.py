@@ -92,6 +92,11 @@ if uploaded_file is not None:
         fig = px.line(data_trends, x='created_at', y='sentiment_score',
                     title='Sentiment Trends Over Time',
                     labels={'created_at': 'Date', 'sentiment_score': 'Average Sentiment Score'})
+        y_min = data_trends['sentiment_score'].min()
+        y_max = data_trends['sentiment_score'].max()
+
+        fig.add_hrect(y0=y_min, y1=0, fillcolor='lightcoral', opacity=0.1, line_width=0)
+        fig.add_hrect(y0=0, y1=y_max, fillcolor='lightgreen', opacity=0.1, line_width=0)
         fig.add_hline(y=0, line_dash='dash', line_color='grey', opacity=0.4, annotation_text='Neutral')
         fig.update_xaxes(rangeslider_visible=True)
         st.plotly_chart(fig)
@@ -121,3 +126,4 @@ if uploaded_file is not None:
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Not enough date data to display theme trends") 
+
