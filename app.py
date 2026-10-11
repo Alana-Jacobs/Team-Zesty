@@ -29,6 +29,9 @@ if uploaded_file is not None:
         st.stop()
 
     df = extract_themes(df)
+    theme_sentiment = df.groupby('theme')['sentiment_score'].mean().reset_index()
+    theme_sentiment.columns = ['Theme', 'Average Sentiment']
+    theme_sentiment = theme_sentiment.sort_values('Average Sentiment')
 
     # Sidebar + theme filter + Comments display + Downloads
     with st.sidebar:
@@ -68,6 +71,9 @@ if uploaded_file is not None:
         st.divider()
         st.markdown("**Top Themes**")
         st.dataframe(df['theme'].value_counts().reset_index().rename(columns={'theme': 'Theme', 'count': 'Count'}), hide_index=True)
+        st.divider()
+        st.markdown("**Theme Sentiment Overview**")
+        st.dataframe(theme_sentiment.rename(columns={'Average Sentiment': 'Avg Sentiment'}).round(2), hide_index=True)
 
     # Sentiment analysis results
     st.subheader("Sentiment Analysis Results")
@@ -110,6 +116,11 @@ if uploaded_file is not None:
     theme_distribution.columns = ['Theme', 'Count']
     fig = px.bar(theme_distribution, x='Count', y='Theme', color='Theme', orientation='h', title='Themes Distribution')
     fig.update_layout(showlegend=False)
+    st.plotly_chart(fig)
+
+    # Theme sentiment distribution chart
+    fig = px.bar(theme_sentiment, x='Average Sentiment', y='Theme', orientation='h', color='Average Sentiment',
+    color_continuous_scale=['red', 'grey', 'green'], color_continuous_midpoint=0, title='Average Sentiment by Theme', hover_data={'Average Sentiment': ':.2f'})
     st.plotly_chart(fig)
 
     # Themes over time
