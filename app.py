@@ -31,8 +31,8 @@ if uploaded_file is not None:
     df = extract_themes(df)
     theme_sentiment = df.groupby('theme')['sentiment_score'].mean().reset_index()
     theme_sentiment.columns = ['Theme', 'Average Sentiment']
-    theme_sentiment = theme_sentiment.sort_values('Average Sentiment')
-
+    theme_sentiment = theme_sentiment.sort_values('Average Sentiment', ascending=False)
+    
     # Sidebar + theme filter + Comments display + Downloads
     with st.sidebar:
         st.header("Themes")
@@ -59,6 +59,24 @@ if uploaded_file is not None:
 
     st.success("Dataset uploaded successfully!")
 
+    summary_string = f""" Dashboard Summary:
+        Generated on: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')}
+
+        entries analysed: {len(df)}
+        entries removed during cleaning: {before_cleaning - len(df)}
+    
+        Sentiment Overview:
+        Positive: {len(df[df['sentiment_label'] == 'positive'])} comments
+        Neutral: {len(df[df['sentiment_label'] == 'neutral'])} comments
+        Negative: {len(df[df['sentiment_label'] == 'negative'])} comments
+        
+        Top Themes:
+        {df['theme'].value_counts().reset_index().rename(columns={'theme': 'Theme', 'count': 'Count'}).to_string(index=False)}
+    
+        Theme Sentiment Overview:
+        {theme_sentiment.round(2).to_string(index=False)}"""
+        
+
     with st.expander("Dashboard Summary"):
         st.markdown(f"**Dataset Summary**")
         st.write(f"Entries analysed: {len(df)}")
@@ -74,6 +92,13 @@ if uploaded_file is not None:
         st.divider()
         st.markdown("**Theme Sentiment Overview**")
         st.dataframe(theme_sentiment.rename(columns={'Average Sentiment': 'Avg Sentiment'}).round(2), hide_index=True)
+        st.divider()
+        st.download_button(
+            label="Export Dashboard Summary as Text",
+            data=summary_string.encode('utf-8'),
+            file_name="dashboard_summary.txt",
+            mime="text/plain"
+        )
 
     # Sentiment analysis results
     st.subheader("Sentiment Analysis Results")
@@ -121,6 +146,7 @@ if uploaded_file is not None:
     # Theme sentiment distribution chart
     fig = px.bar(theme_sentiment, x='Average Sentiment', y='Theme', orientation='h', color='Average Sentiment',
     color_continuous_scale=['red', 'grey', 'green'], color_continuous_midpoint=0, title='Average Sentiment by Theme', hover_data={'Average Sentiment': ':.2f'})
+    fig.update_yaxes(autorange='reversed')
     st.plotly_chart(fig)
 
     # Themes over time
